@@ -16,8 +16,16 @@
 # - Settings noted as "required" must be in your configuration file
 # - Settings noted as "optional" can be omitted
 
+# readonlyAPIKeys: API keys for read-only access to /api/v1/* endpoints
+# - optional, default: [] (no read-only access)
+# - these keys only allow GET requests that return raw metrics data
+# - useful for mobile apps and analytics dashboards
+# - accepts Authorization: Bearer, Authorization: Basic, or x-api-key header
+#readonlyAPIKeys:
+#  - "mobile-app-key-123"
+#  - "dashboard-key-456"
+
 # healthCheckTimeout: number of seconds to wait for a model to be ready to serve requests
-# - optional, default: 120
 # - minimum value is 15 seconds, anything less will be set to this value
 healthCheckTimeout: 500
 

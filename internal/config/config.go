@@ -159,6 +159,10 @@ type Config struct {
 	// support API keys, see issue #433, #50, #251
 	RequiredAPIKeys []string `yaml:"apiKeys"`
 
+	// ReadonlyAPIKeys are API keys with read-only access to /api/v1/* endpoints.
+	// Unlike apiKeys, these cannot modify state — only GET endpoints.
+	ReadonlyAPIKeys []string `yaml:"readonlyAPIKeys"`
+
 	// support remote peers, see issue #433, #296
 	Peers PeerDictionaryConfig `yaml:"peers"`
 }
@@ -513,6 +517,17 @@ func LoadConfigFromReader(r io.Reader) (Config, error) {
 			return Config{}, fmt.Errorf("api key cannot contain spaces: `%s`", apikey)
 		}
 		config.RequiredAPIKeys[i] = apikey
+	}
+
+	// Validate read-only API keys
+	for i, apikey := range config.ReadonlyAPIKeys {
+		if apikey == "" {
+			return Config{}, fmt.Errorf("empty api key found in readonlyAPIKeys")
+		}
+		if strings.Contains(apikey, " ") {
+			return Config{}, fmt.Errorf("readonly api key cannot contain spaces: `%s`", apikey)
+		}
+		config.ReadonlyAPIKeys[i] = apikey
 	}
 
 	// Process peers with global macro substitution

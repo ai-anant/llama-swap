@@ -71,6 +71,41 @@ func extractAPIKey(r *http.Request) string {
 	}
 }
 
+// CreateReadonlyAuthMiddleware returns middleware that validates keys from the
+// readonlyAPIKeys config list. Accepts keys via Authorization: Bearer,
+// Authorization: Basic (password field), or x-api-key. When no keys are
+// configured, access is denied (unlike the main API which falls open).
+func CreateReadonlyAuthMiddleware(keys []string) chain.Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if len(keys) == 0 {
+				router.SendResponse(w, r, http.StatusUnauthorized,
+					"unauthorized: no read-only API keys configured")
+				return
+			}
+
+			provided := extractAPIKey(r)
+			valid := false
+			for _, key := range keys {
+				if provided == key {
+					valid = true
+					break
+				}
+			}
+			if !valid {
+				w.Header().Set("WWW-Authenticate", `Bearer realm="llama-swap-readonly"`)
+				router.SendResponse(w, r, http.StatusUnauthorized,
+					"unauthorized: invalid or missing read-only API key")
+				return
+			}
+
+			r.Header.Del("Authorization")
+			r.Header.Del("x-api-key")
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 // CreateCORSMiddleware returns middleware that answers OPTIONS preflight
 // requests with permissive CORS headers (see issues #81, #77, #42). Non-OPTIONS
 // requests pass through untouched.

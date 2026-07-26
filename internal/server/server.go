@@ -279,11 +279,12 @@ func (s *Server) routes() {
 	mux.Handle("GET /api/version", apiChain.ThenFunc(s.handleAPIVersion))
 	mux.Handle("GET /api/captures/{id}", apiChain.ThenFunc(s.handleAPICapture))
 
-	// Read-only API v1 — no auth required, raw data for mobile/analytics clients.
-	mux.HandleFunc("GET /api/v1/health", s.handleAPIV1Health)
-	mux.HandleFunc("GET /api/v1/metrics", s.handleAPIV1Metrics)
-	mux.HandleFunc("GET /api/v1/metrics/{id}", s.handleAPIV1MetricsByID)
-	mux.HandleFunc("GET /api/v1/models", s.handleAPIV1Models)
+	// Read-only API v1 — authenticated via readonlyAPIKeys, raw data for mobile/analytics clients.
+	readonlyChain := chain.New(CreateReadonlyAuthMiddleware(s.cfg.ReadonlyAPIKeys))
+	mux.Handle("GET /api/v1/health", readonlyChain.ThenFunc(s.handleAPIV1Health))
+	mux.Handle("GET /api/v1/metrics", readonlyChain.ThenFunc(s.handleAPIV1Metrics))
+	mux.Handle("GET /api/v1/metrics/{id}", readonlyChain.ThenFunc(s.handleAPIV1MetricsByID))
+	mux.Handle("GET /api/v1/models", readonlyChain.ThenFunc(s.handleAPIV1Models))
 
 	s.mux = mux
 	s.handler = chain.New(CreateRequestLogMiddleware(s.proxylog), CreateCORSMiddleware()).Then(mux)

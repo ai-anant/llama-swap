@@ -439,6 +439,15 @@
             "default": [],
             "description": "Require an API key when making requests to inference endpoints. When empty, authorization will not be checked. Each key is a non-empty string."
         },
+        "readonlyAPIKeys": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "minLength": 1
+            },
+            "default": [],
+            "description": "API keys for read-only access to /api/v1/* metrics endpoints. These keys cannot modify any state — only GET responses. Accepts same header formats as apiKeys."
+        },
         "peers": {
             "type": "object",
             "additionalProperties": {
